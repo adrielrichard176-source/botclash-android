@@ -1,11 +1,10 @@
-
 name: BotClash Android APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'BotClash_Android_0_8_2_Deck4_source.zip'
+      - 'BotClash_Android_0_9_0_Advanced_source.zip'
       - '.github/workflows/build-android.yml'
 
 permissions:
@@ -14,8 +13,7 @@ permissions:
 jobs:
   build-debug-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
-
+    timeout-minutes: 40
     steps:
       - name: Baixar o repositorio
         uses: actions/checkout@v4
@@ -32,7 +30,7 @@ jobs:
       - name: Instalar plataforma e Build Tools
         run: |
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
       - name: Instalar Gradle 8.13
         uses: gradle/actions/setup-gradle@v4
@@ -42,22 +40,18 @@ jobs:
       - name: Extrair projeto-fonte
         shell: bash
         run: |
-          ZIP="$(find . -maxdepth 2 -type f -name 'BotClash_Android_0_8_2_Deck4_source.zip' -print -quit)"
+          ZIP="$(find . -maxdepth 2 -type f -name 'BotClash_Android_0_9_0_Advanced_source.zip' -print -quit)"
           if [ -z "$ZIP" ]; then
-            echo "Nao encontrei o ZIP na raiz do repositorio."
+            echo "Nao encontrei BotClash_Android_0_9_0_Advanced_source.zip na raiz do repositorio."
             exit 1
           fi
-
           mkdir -p build-source
           unzip -q "$ZIP" -d build-source
-
           PROJECT_DIR="$(find build-source -type d -name android-studio-project -print -quit)"
-
           if [ -z "$PROJECT_DIR" ]; then
             echo "O ZIP nao contem android-studio-project."
             exit 1
           fi
-
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "PROJECT_ROOT=$(dirname "$PROJECT_DIR")" >> "$GITHUB_ENV"
 
@@ -71,19 +65,16 @@ jobs:
         shell: bash
         run: |
           mkdir -p release-output
-
           cp "$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk" \
-             "release-output/BotClash-Android-0.8.2-debug.apk"
-
-          sha256sum release-output/BotClash-Android-0.8.2-debug.apk \
+             "release-output/BotClash-Android-0.9.0-debug.apk"
+          sha256sum release-output/BotClash-Android-0.9.0-debug.apk \
              > release-output/SHA256SUMS.txt
-
           ls -lh release-output
 
       - name: Publicar artefatos da execucao
         uses: actions/upload-artifact@v4
         with:
-          name: BotClash-Android-0.8.2-debug-APK
+          name: BotClash-Android-0.9.0-debug-APK
           path: release-output/*
           if-no-files-found: error
           retention-days: 30
@@ -91,14 +82,13 @@ jobs:
       - name: Publicar release de teste
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.8.2-alpha
-          name: BotClash Android 0.8.2-alpha
+          tag_name: v0.9.0-alpha
+          name: BotClash Android 0.9.0-alpha
           prerelease: true
           draft: false
           make_latest: false
           overwrite_files: true
           fail_on_unmatched_files: true
           files: |
-            release-output/BotClash-Android-0.8.2-debug.apk
+            release-output/BotClash-Android-0.9.0-debug.apk
             release-output/SHA256SUMS.txt
-            
